@@ -31,6 +31,11 @@ end
 
 function emit_each_variant_kw_cons(info::EmitInfo, storage::StorageInfo)
     storage.parent.kind == Named || return nothing
+    # A field-less variant has no keyword arguments, so the keyword
+    # constructor would be an identical zero-arg method to the positional one
+    # emitted by `emit_each_variant_cons`. Defining both is a method overwrite,
+    # which Julia rejects during module precompilation. Skip the redundant one.
+    isempty(storage.parent.fields) && return nothing
 
     args = [field.name for field in storage.parent.fields]
     jl = JLFunction(;
